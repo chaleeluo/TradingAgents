@@ -18,6 +18,7 @@ _ENV_OVERRIDES = {
     "TRADINGAGENTS_CHECKPOINT_ENABLED":   "checkpoint_enabled",
     "TRADINGAGENTS_BENCHMARK_TICKER":     "benchmark_ticker",
     "TRADINGAGENTS_TEMPERATURE":          "temperature",
+    "TRADINGAGENTS_ENABLE_RL_TRADER":     "enable_rl_trader",
 }
 
 
@@ -120,6 +121,14 @@ DEFAULT_CONFIG = _apply_env_overrides({
     # so the reflection label keeps reading "Alpha vs SPY" for US tickers
     # while non-US tickers get their regional index automatically.
     "benchmark_ticker": None,
+    # Reinforcement Learning trading agent
+    "enable_rl_trader": False,
+    "rl_model_path": None,
+    "rl_train_timesteps": 20_000,
+    "rl_risk_penalty": 0.5,
+    "rl_trade_cost": 0.001,
+    "rl_window_size": 20,
+
     "benchmark_map": {
         ".NS":  "^NSEI",       # NSE India (Nifty 50)
         ".BO":  "^BSESN",      # BSE India (Sensex)

@@ -31,6 +31,9 @@ dependencies = [
     "tqdm>=4.67.1",
     "typing-extensions>=4.14.0",
     "yfinance>=1.4.1",
+    "stable-baselines3",
+    "gymnasium",
+    "matplotlib>=3.8.0",  # only used by TradingEnv.render("human")
 ]
 
 [project.optional-dependencies]
@@ -43,6 +46,15 @@ dev = [
 # stays lean: pip install "tradingagents[bedrock]".
 bedrock = [
     "langchain-aws>=1.5.0",
+]
+
+# Reinforcement learning support (optional — keeps the core install lean).
+# stable-baselines3 pulls in PyTorch, gymnasium, and several GB of
+# dependencies, so it lives in its own optional-deps group.
+rl = [
+    "stable-baselines3>=2.6.0",
+    "gymnasium>=1.1.0",
+    "matplotlib>=3.8.0",  # only used by TradingEnv.render("human")
 ]
 
 [project.scripts]
