@@ -113,6 +113,10 @@ class TradingAgentsGraph:
             analyst_concurrency_limit=self.config.get("analyst_concurrency_limit", 1),
         )
 
+        # RL trader config
+        self._enable_rl = self.config.get("enable_rl_trader", False)
+        self._rl_model_path = self.config.get("rl_model_path", None)
+
         self.propagator = Propagator(
             max_recur_limit=self.config.get("max_recur_limit", 100),
         )
@@ -125,7 +129,11 @@ class TradingAgentsGraph:
         self.log_states_dict = {}  # date to full state dict
 
         # Set up the graph: keep the workflow for recompilation with a checkpointer.
-        self.workflow = self.graph_setup.setup_graph(selected_analysts)
+        self.workflow = self.graph_setup.setup_graph(
+            selected_analysts,
+            enable_rl_trader=self._enable_rl,
+            rl_model_path=self._rl_model_path,
+        )
         self.graph = self.workflow.compile()
         self._checkpointer_ctx = None
 
@@ -437,6 +445,7 @@ class TradingAgentsGraph:
                 ],
             },
             "trader_investment_decision": final_state["trader_investment_plan"],
+            "rl_signal": final_state.get("rl_signal", ""),
             "risk_debate_state": {
                 "aggressive_history": final_state["risk_debate_state"]["aggressive_history"],
                 "conservative_history": final_state["risk_debate_state"]["conservative_history"],
