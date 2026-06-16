@@ -20,6 +20,7 @@ from tradingagents.agents import (
     create_sentiment_analyst,
     create_trader,
 )
+from tradingagents.agents.rl_agent import create_rl_trader
 from tradingagents.agents.utils.agent_states import AgentState
 
 from .analyst_execution import build_analyst_execution_plan
@@ -45,16 +46,19 @@ class GraphSetup:
         self.analyst_concurrency_limit = analyst_concurrency_limit
 
     def setup_graph(
-        self, selected_analysts=("market", "social", "news", "fundamentals")
+        self,
+        selected_analysts=("market", "social", "news", "fundamentals"),
+        enable_rl_trader: bool = False,
+        rl_model_path: str | None = None,
     ):
         """Set up and compile the agent workflow graph.
 
         Args:
-            selected_analysts (list): List of analyst types to include. Options are:
-                - "market": Market analyst
-                - "social": Social media analyst
-                - "news": News analyst
-                - "fundamentals": Fundamentals analyst
+            selected_analysts: List of analyst types to include.
+            enable_rl_trader: When True, adds an RL trader node between
+                the LLM Trader and the risk management debate.
+            rl_model_path: Path to a pre-trained RL model. Required when
+                ``enable_rl_trader`` is True.
         """
         plan = build_analyst_execution_plan(
             selected_analysts,
@@ -80,6 +84,11 @@ class GraphSetup:
         conservative_analyst = create_conservative_debator(self.quick_thinking_llm)
         portfolio_manager_node = create_portfolio_manager(self.deep_thinking_llm)
 
+        # Optional RL trader node
+        rl_trader_node = None
+        if enable_rl_trader:
+            rl_trader_node = create_rl_trader(rl_model_path)
+
         # Create workflow
         workflow = StateGraph(AgentState)
 
@@ -94,6 +103,8 @@ class GraphSetup:
         workflow.add_node("Bear Researcher", bear_researcher_node)
         workflow.add_node("Research Manager", research_manager_node)
         workflow.add_node("Trader", trader_node)
+        if rl_trader_node is not None:
+            workflow.add_node("RL Trader", rl_trader_node)
         workflow.add_node("Aggressive Analyst", aggressive_analyst)
         workflow.add_node("Neutral Analyst", neutral_analyst)
         workflow.add_node("Conservative Analyst", conservative_analyst)
@@ -141,7 +152,14 @@ class GraphSetup:
             },
         )
         workflow.add_edge("Research Manager", "Trader")
-        workflow.add_edge("Trader", "Aggressive Analyst")
+
+        # RL Trader node sits between LLM Trader and risk debate
+        next_after_trader = "RL Trader" if rl_trader_node is not None else "Aggressive Analyst"
+        workflow.add_edge("Trader", next_after_trader)
+
+        if rl_trader_node is not None:
+            workflow.add_edge("RL Trader", "Aggressive Analyst")
+
         workflow.add_conditional_edges(
             "Aggressive Analyst",
             self.conditional_logic.should_continue_risk_analysis,
