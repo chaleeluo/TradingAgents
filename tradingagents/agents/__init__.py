@@ -16,6 +16,13 @@ from .trader.trader import create_trader
 from .utils.agent_states import AgentState, InvestDebateState, RiskDebateState
 from .utils.agent_utils import create_msg_delete
 
+# RL agent (optional — requires stable-baselines3)
+try:
+    from .rl_agent import RLTrader, create_rl_trader
+except ImportError:
+    RLTrader = None  # type: ignore[assignment,misc]
+    create_rl_trader = None  # type: ignore[assignment]
+
 __all__ = [
     "AgentState",
     "create_msg_delete",
@@ -34,4 +41,6 @@ __all__ = [
     "create_sentiment_analyst",
     "create_social_media_analyst",  # deprecated; will be removed in a future version
     "create_trader",
+    "create_rl_trader",
+    "RLTrader",
 ]
